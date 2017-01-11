@@ -14,15 +14,19 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 public class ChatRoomFragment extends Fragment {
 
+    private static final String MESSAGE_SENT_EVENT = "message_sent";
+
     private FirebaseRecyclerAdapter<Message, MessageViewHolder> firebaseRecyclerAdapter;
     private RecyclerView recyclerViewConversation;
     private LinearLayoutManager linearLayoutManager;
     private DatabaseReference databaseReference;
+    private FirebaseAnalytics firebaseAnalytics;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -36,6 +40,7 @@ public class ChatRoomFragment extends Fragment {
     private void updateUI(View rootView) {
 
         databaseReference = FirebaseDatabase.getInstance().getReference();
+        firebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
 
         recyclerViewConversation = (RecyclerView) rootView.findViewById(R.id.activity_chat_recycler_view_conversation);
         firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<Message, MessageViewHolder>(
@@ -104,6 +109,7 @@ public class ChatRoomFragment extends Fragment {
                         user.getColorCode());
                 databaseReference.child("conversation").child("messages").push().setValue(message);
                 editTextMessage.setText("");
+                firebaseAnalytics.logEvent(MESSAGE_SENT_EVENT, null);
             }
         });
     }

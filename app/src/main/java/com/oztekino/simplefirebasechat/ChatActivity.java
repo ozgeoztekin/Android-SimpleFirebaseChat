@@ -12,6 +12,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -23,10 +24,13 @@ import com.google.firebase.database.FirebaseDatabase;
 public class ChatActivity extends AppCompatActivity {
 
     private static final int TAB_COUNT = 2;
+    private static final String USER_OFFLINE_EVENT = "user_offline";
+    private static final String APP_BACKGROUND = "app_background";
 
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
     private DatabaseReference databaseReference;
+    private FirebaseAnalytics firebaseAnalytics;
     private ChildEventListener userListListener;
 
     @Override
@@ -43,6 +47,7 @@ public class ChatActivity extends AppCompatActivity {
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
         databaseReference = FirebaseDatabase.getInstance().getReference();
+        firebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
         userListListener = new ChildEventListener() {
             @Override
@@ -84,6 +89,7 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         databaseReference.child("users").child(firebaseUser.getUid()).child("status").setValue(UserStatus.INACTIVE.ordinal());
+        firebaseAnalytics.logEvent(APP_BACKGROUND, null);
         super.onPause();
     }
 
@@ -106,6 +112,9 @@ public class ChatActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_sign_out:
+                Bundle offlineUser = new Bundle();
+                offlineUser.putString(FirebaseAnalytics.Param.VALUE, firebaseUser.getDisplayName());
+                firebaseAnalytics.logEvent(USER_OFFLINE_EVENT, offlineUser);
                 databaseReference.child("users").child(firebaseUser.getUid()).child("status").setValue(UserStatus.OFFLINE.ordinal());
                 firebaseAuth.signOut();
                 startActivity(new Intent(this, SignInActivity.class));

@@ -8,16 +8,35 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class ChatActivity extends AppCompatActivity {
 
     private FirebaseAuth firebaseAuth;
+    private FirebaseUser firebaseUser;
+    private DatabaseReference databaseReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         firebaseAuth = FirebaseAuth.getInstance();
+        firebaseUser = firebaseAuth.getCurrentUser();
+        databaseReference = FirebaseDatabase.getInstance().getReference();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        databaseReference.child("users").child(firebaseUser.getUid()).child("status").setValue(UserStatus.ONLINE.ordinal());
+    }
+
+    @Override
+    protected void onPause() {
+        databaseReference.child("users").child(firebaseUser.getUid()).child("status").setValue(UserStatus.INACTIVE.ordinal());
+        super.onPause();
     }
 
     @Override
@@ -31,6 +50,7 @@ public class ChatActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_sign_out:
+                databaseReference.child("users").child(firebaseUser.getUid()).child("status").setValue(UserStatus.OFFLINE.ordinal());
                 firebaseAuth.signOut();
                 startActivity(new Intent(this, SignInActivity.class));
                 finish();

@@ -1,3 +1,19 @@
 <resources>
     <string name="app_name">SimpleFirebaseChat</string>
+
+    <string name="login_with_password">LOGIN WITH PASSWORD</string>
+    <string name="signed_in_message">Signed in %1$s</string>
+    <string name="signed_out_message">Signed out</string>
+    <string name="auth_failed">Authentication Failed!</string>
+    <string name="login_with_password_mock_email_data">demouser@demo.com</string>
+    <string name="login_with_password_mock_password_data">123456</string>
+    <string name="user_status_online">Online</string>
+    <string name="user_status_offline">Offline</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="send_message">SEND</string>
+    <string name="typing_message">%1$s %2$s typing</string>
+    <string name="several_typing_message">Several people are typing</string>
+    <string name="chat_room_tab_title">CHAT ROOM</string>
+    <string name="user_list_tab_title">USERS</string>
+    <string name="chat_sender_name_you">You</string>
 </resources>

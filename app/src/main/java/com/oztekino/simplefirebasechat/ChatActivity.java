@@ -14,6 +14,9 @@ import android.view.MenuItem;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -24,6 +27,7 @@ public class ChatActivity extends AppCompatActivity {
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
     private DatabaseReference databaseReference;
+    private ChildEventListener userListListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +44,35 @@ public class ChatActivity extends AppCompatActivity {
         firebaseUser = firebaseAuth.getCurrentUser();
         databaseReference = FirebaseDatabase.getInstance().getReference();
 
+        userListListener = new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                User user = dataSnapshot.getValue(User.class);
+                getSupportActionBar().setSubtitle(UserUtil.handleUserTypingList(getApplicationContext(), user));
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+            }
+        };
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        databaseReference.child("users").addChildEventListener(userListListener);
     }
 
     @Override
@@ -52,6 +85,14 @@ public class ChatActivity extends AppCompatActivity {
     protected void onPause() {
         databaseReference.child("users").child(firebaseUser.getUid()).child("status").setValue(UserStatus.INACTIVE.ordinal());
         super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        if (userListListener != null) {
+            databaseReference.child("users").removeEventListener(userListListener);
+        }
+        super.onStop();
     }
 
     @Override

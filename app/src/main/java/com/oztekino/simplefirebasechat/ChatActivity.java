@@ -20,6 +20,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -32,22 +33,31 @@ public class ChatActivity extends AppCompatActivity {
     private DatabaseReference databaseReference;
     private FirebaseAnalytics firebaseAnalytics;
     private ChildEventListener userListListener;
+    private ValueEventListener currentUserListener;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.activity_chat_tab_layout);
-        ViewPager viewPager = (ViewPager) findViewById(R.id.activity_chat_view_pager);
-
-        viewPager.setAdapter(new SectionPagerAdapter(getSupportFragmentManager()));
-        tabLayout.setupWithViewPager(viewPager);
 
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
         databaseReference = FirebaseDatabase.getInstance().getReference();
         firebaseAnalytics = FirebaseAnalytics.getInstance(this);
+
+        currentUserListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                User userFromFirebase = dataSnapshot.getValue(User.class);
+                UserUtil.syncCurrentUser(userFromFirebase);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+            }
+        };
 
         userListListener = new ChildEventListener() {
             @Override
@@ -72,12 +82,18 @@ public class ChatActivity extends AppCompatActivity {
             public void onCancelled(DatabaseError databaseError) {
             }
         };
-    }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
         databaseReference.child("users").addChildEventListener(userListListener);
+        if (UserUtil.getUser() == null) {
+            databaseReference.child("users").child(firebaseUser.getUid()).child("status").setValue(UserStatus.ONLINE.ordinal());
+            databaseReference.child("users").child(firebaseUser.getUid()).addValueEventListener(currentUserListener);
+        }
+
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.activity_chat_tab_layout);
+        ViewPager viewPager = (ViewPager) findViewById(R.id.activity_chat_view_pager);
+
+        viewPager.setAdapter(new SectionPagerAdapter(getSupportFragmentManager()));
+        tabLayout.setupWithViewPager(viewPager);
     }
 
     @Override
@@ -98,6 +114,7 @@ public class ChatActivity extends AppCompatActivity {
         if (userListListener != null) {
             databaseReference.child("users").removeEventListener(userListListener);
         }
+        databaseReference.child("users").child(firebaseUser.getUid()).child("status").setValue(UserStatus.INACTIVE.ordinal());
         super.onStop();
     }
 
